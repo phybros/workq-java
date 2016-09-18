@@ -1,5 +1,7 @@
 package com.willwarren;
 
+import com.willwarren.exceptions.ResponseException;
+import com.willwarren.model.BackgroundJob;
 import com.willwarren.model.ForegroundJob;
 import org.junit.Assert;
 import org.junit.Test;
@@ -18,17 +20,48 @@ public class WorkqClientTest {
         this.client = new WorkqClient("localhost", 9922);
     }
 
+//    @Test
+//    public void testForegroundJob() throws Exception {
+//        ForegroundJob job = new ForegroundJob();
+//        job.setName("testForegroundJob");
+//        job.setId(UUID.randomUUID());
+//        job.setTimeout(60000);
+//        job.setPayload("TEST".getBytes());
+//        job.setPriority(100);
+//        job.setTtr(1000);
+//
+//        Assert.assertTrue(this.client.run(job) > 0);
+//    }
+
     @Test
-    public void testForegroundJob() throws Exception {
+    public void testForegroundJobTimeout() throws Exception {
+        ForegroundJob job = new ForegroundJob();
+        job.setName("testForegroundJobTimeout");
+        job.setId(UUID.randomUUID());
+        job.setTimeout(1000);
+        job.setPayload("TEST".getBytes());
+        job.setPriority(100);
+        job.setTtr(1000);
 
-        ForegroundJob foregroundJob = new ForegroundJob();
-        foregroundJob.setName("MYJOB");
-        foregroundJob.setId(UUID.randomUUID());
-        foregroundJob.setTimeout(60000);
-        foregroundJob.setPayload("TEST".getBytes());
-        foregroundJob.setPriority(100);
-        foregroundJob.setTtr(1000);
+        try {
+            this.client.run(job);
+        } catch (ResponseException re) {
+            Assert.assertEquals("TIMED-OUT", re.getResponseErrorCode());
+        }
+    }
 
-        Assert.assertTrue(this.client.run(foregroundJob) > 0);
+    @Test
+    public void testBackgroundJob() throws Exception {
+        BackgroundJob job = new BackgroundJob();
+        job.setName("testBackgroundJob");
+        job.setId(UUID.randomUUID());
+        job.setTtl(3600000);
+        job.setPayload("Test Payload!".getBytes());
+        job.setPriority(100);
+        job.setTtr(1000);
+
+        job.setMaxAttempts(2);
+
+        this.client.add(job);
     }
 }
